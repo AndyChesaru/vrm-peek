@@ -1,0 +1,23 @@
+# Build output
+/build/
+/dist/
+
+# Fetched by scripts/fetch-deps.ps1
+/external/
+
+# Fetched by npm
+/src/web/node_modules/
+
+# Sample avatars are third-party; fetch them with scripts/fetch-samples.ps1.
+# The two tiny malformed fixtures below are ours and are kept in the repo.
+/samples/*.vrm
+!/samples/not-a-model.vrm
+!/samples/empty-gltf.vrm
+
+# Editor / OS
+.vs/
+.vscode/
+*.user
+*.suo
+Thumbs.db
+Desktop.ini

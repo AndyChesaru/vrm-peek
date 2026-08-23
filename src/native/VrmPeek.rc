@@ -1,0 +1,29 @@
+#include <windows.h>
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION    1,0,0,0
+ PRODUCTVERSION 1,0,0,0
+ FILEFLAGSMASK  VS_FFI_FILEFLAGSMASK
+ FILEFLAGS      0
+ FILEOS         VOS_NT_WINDOWS32
+ FILETYPE       VFT_DLL
+ FILESUBTYPE    VFT2_UNKNOWN
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904B0"
+        BEGIN
+            VALUE "FileDescription", "VrmPeek - VRM preview handler"
+            VALUE "FileVersion",     "1.0.0.0"
+            VALUE "InternalName",    "VrmPeek"
+            VALUE "OriginalFilename","VrmPeek.dll"
+            VALUE "ProductName",     "VrmPeek"
+            VALUE "ProductVersion",  "1.0.0.0"
+            VALUE "Comments",        "Renders .vrm avatars in the Windows Explorer preview pane."
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END

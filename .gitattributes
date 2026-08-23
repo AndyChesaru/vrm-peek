@@ -1,0 +1,12 @@
+* text=auto
+
+# PowerShell is conventionally CRLF on Windows.
+*.ps1 text eol=crlf
+
+# Never line-ending-convert these: empty-gltf.vrm is a binary glTF fixture and
+# autocrlf would corrupt its header.
+*.vrm  binary
+*.png  binary
+*.wasm binary
+*.dll  binary
+*.exe  binary

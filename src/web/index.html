@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VrmPeek</title>
+<style>
+:root{
+  --bg:#17171b; --fg:#e9e9ef;
+  --surface:rgba(255,255,255,.08);
+  --surface-hi:rgba(255,255,255,.16);
+  --stroke:rgba(255,255,255,.14);
+  --muted:rgba(233,233,239,.62);
+  --scrim:linear-gradient(to top,rgba(0,0,0,.72) 0%,rgba(0,0,0,.42) 42%,transparent 100%);
+  --panel:rgba(24,24,29,.93);
+  --accent:#7aa7ff;
+  --glow:rgba(255,255,255,.06);
+}
+:root[data-theme="light"]{
+  --bg:#f4f4f6; --fg:#1a1a1f;
+  --surface:rgba(0,0,0,.055);
+  --surface-hi:rgba(0,0,0,.11);
+  --stroke:rgba(0,0,0,.12);
+  --muted:rgba(26,26,31,.6);
+  --scrim:linear-gradient(to top,rgba(255,255,255,.86) 0%,rgba(255,255,255,.5) 42%,transparent 100%);
+  --panel:rgba(250,250,252,.95);
+  --accent:#2f6bd8;
+  --glow:rgba(0,0,0,.05);
+}
+
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;overflow:hidden}
+body{
+  background:radial-gradient(120% 90% at 50% 8%,var(--glow) 0%,transparent 60%),var(--bg);
+  color:var(--fg);
+  font:13px/1.45 "Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;
+  user-select:none;
+}
+a{color:var(--accent)}
+
+#stage{position:fixed;inset:0}
+#gl{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+#gl:active{cursor:grabbing}
+
+/* ------------------------------------------------------------------ hud */
+#hud{
+  position:absolute;top:8px;right:8px;display:flex;gap:4px;
+  opacity:0;transition:opacity .18s ease;
+}
+body.loaded #stage:hover #hud,#hud:focus-within,#hud.pinned{opacity:1}
+#hud button{
+  width:28px;height:28px;padding:0;display:grid;place-items:center;
+  border:1px solid var(--stroke);border-radius:7px;
+  background:var(--surface);backdrop-filter:blur(14px);
+  color:var(--fg);cursor:pointer;transition:background .12s,color .12s,border-color .12s;
+}
+#hud button:hover{background:var(--surface-hi)}
+#hud button.on{background:var(--accent);border-color:transparent;color:#fff}
+#hud button svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.6;
+  stroke-linecap:round;stroke-linejoin:round}
+#hud.compact button{width:24px;height:24px}
+#hud.compact button svg{width:13px;height:13px}
+
+/* ------------------------------------------------------------------ bar */
+#bar{
+  position:absolute;left:0;right:0;bottom:0;padding:26px 12px 10px;
+  background:var(--scrim);pointer-events:none;
+  opacity:0;transform:translateY(6px);transition:opacity .25s ease,transform .25s ease;
+}
+#bar.ready{opacity:1;transform:none}
+#title{font-size:14px;font-weight:600;letter-spacing:-.01em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#sub{font-size:11.5px;color:var(--muted);margin-top:1px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px}
+.chip{
+  font-size:10.5px;font-weight:500;line-height:1;padding:4px 7px;border-radius:5px;
+  background:var(--surface);border:1px solid var(--stroke);color:var(--muted);
+  white-space:nowrap;
+}
+#bar.compact #chips .chip:nth-child(n+4){display:none}
+#bar.compact{padding:22px 10px 8px}
+
+/* ---------------------------------------------------------------- panel */
+#panel{
+  position:absolute;left:0;right:0;bottom:0;max-height:78%;
+  display:flex;flex-direction:column;
+  background:var(--panel);backdrop-filter:blur(24px);
+  border-top:1px solid var(--stroke);
+  border-radius:12px 12px 0 0;
+  transform:translateY(101%);transition:transform .26s cubic-bezier(.2,.8,.25,1);
+  box-shadow:0 -8px 32px rgba(0,0,0,.28);
+}
+#panel.open{transform:none}
+.panel-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 12px 8px;flex:0 0 auto;
+}
+.panel-head h2{margin:0;font-size:12px;font-weight:600;letter-spacing:.02em;
+  text-transform:uppercase;color:var(--muted)}
+.panel-close{
+  width:24px;height:24px;display:grid;place-items:center;padding:0;
+  border:0;border-radius:6px;background:transparent;color:var(--muted);cursor:pointer;
+}
+.panel-close:hover{background:var(--surface-hi);color:var(--fg)}
+.panel-close svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
+#panel-body{padding:0 12px 14px;overflow-y:auto;user-select:text}
+#panel-body h3{
+  margin:12px 0 6px;font-size:11px;font-weight:600;letter-spacing:.04em;
+  text-transform:uppercase;color:var(--muted);
+}
+#panel-body h3:first-child{margin-top:0}
+#panel-body dl{
+  display:grid;grid-template-columns:minmax(84px,34%) 1fr;
+  gap:4px 10px;margin:0;font-size:12px;
+}
+#panel-body dt{color:var(--muted);overflow-wrap:anywhere}
+#panel-body dd{margin:0;overflow-wrap:anywhere}
+#panel-body::-webkit-scrollbar{width:9px}
+#panel-body::-webkit-scrollbar-thumb{
+  background:var(--surface-hi);border-radius:9px;border:2px solid transparent;background-clip:content-box}
+
+/* -------------------------------------------------------- loading/error */
+#loading{
+  position:absolute;inset:0;display:grid;place-content:center;justify-items:center;
+  gap:12px;padding:24px;text-align:center;
+}
+#loading[hidden]{display:none}
+.spinner{
+  width:26px;height:26px;border-radius:50%;
+  border:2px solid var(--surface-hi);border-top-color:var(--accent);
+  animation:spin .8s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+#progress{width:150px;max-width:60vw;height:3px;border-radius:3px;
+  background:var(--surface-hi);overflow:hidden}
+#progress-fill{height:100%;background:var(--accent);transform:scaleX(0);
+  transform-origin:left;transition:transform .12s linear}
+#progress.indeterminate #progress-fill{
+  transform:none;width:40%;animation:slide 1.1s ease-in-out infinite}
+@keyframes slide{0%{margin-left:-40%}100%{margin-left:100%}}
+#status{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+
+#error{
+  position:absolute;inset:0;display:grid;place-content:center;justify-items:center;
+  gap:6px;padding:28px;text-align:center;
+}
+#error[hidden]{display:none}
+#error svg{width:26px;height:26px;fill:none;stroke:var(--muted);stroke-width:1.5;
+  stroke-linecap:round;stroke-linejoin:round;margin-bottom:4px}
+#error-title{font-size:13px;font-weight:600}
+#error-text{font-size:11.5px;color:var(--muted);max-width:34ch;user-select:text}
+</style>
+</head>
+<body>
+
+<div id="stage">
+  <div id="hud">
+    <button data-act="spin" title="Auto-rotate" aria-label="Auto-rotate">
+      <svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/></svg>
+    </button>
+    <button data-act="frame" title="Framing: full / upper body / face" aria-label="Change framing">
+      <svg viewBox="0 0 24 24"><path d="M4 9V5a1 1 0 0 1 1-1h4M15 4h4a1 1 0 0 1 1 1v4M20 15v4a1 1 0 0 1-1 1h-4M9 20H5a1 1 0 0 1-1-1v-4"/></svg>
+    </button>
+    <button data-act="reset" title="Reset view" aria-label="Reset view">
+      <svg viewBox="0 0 24 24"><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/><circle cx="12" cy="12" r="4.2"/></svg>
+    </button>
+    <button data-act="info" title="Details" aria-label="Details">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6"/><path d="M12 11v5.2M12 7.8v.2"/></svg>
+    </button>
+  </div>
+
+  <div id="bar">
+    <div id="title"></div>
+    <div id="sub"></div>
+    <div id="chips"></div>
+  </div>
+
+  <div id="panel">
+    <div class="panel-head">
+      <h2>Details</h2>
+      <button class="panel-close" aria-label="Close details">
+        <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div id="panel-body"></div>
+  </div>
+
+  <div id="loading">
+    <div class="spinner"></div>
+    <div id="progress"><div id="progress-fill"></div></div>
+    <div id="status">Loading…</div>
+  </div>
+
+  <div id="error" hidden>
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6"/><path d="M12 7.6v5.2M12 16.2v.2"/></svg>
+    <div id="error-title"></div>
+    <div id="error-text"></div>
+  </div>
+</div>
+
+<script type="module" src="./viewer.js"></script>
+</body>
+</html>
