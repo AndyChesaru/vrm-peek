@@ -17,13 +17,22 @@ param(
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 
-if (-not $Path) { $Path = Join-Path $root 'dist\VrmPeek' }
+# Two layouts are supported: the repo, where this script lives in scripts\ and
+# registers dist\VrmPeek, and the released zip, where it sits next to the DLL.
+if (-not $Path) {
+    $Path = if (Test-Path (Join-Path $PSScriptRoot 'VrmPeek.dll')) { $PSScriptRoot }
+            else { Join-Path $root 'dist\VrmPeek' }
+}
 $Path   = (Resolve-Path -LiteralPath $Path).Path
 $dll    = Join-Path $Path 'VrmPeek.dll'
 $viewer = Join-Path $Path 'web\viewer.html'
 
-if (-not (Test-Path $dll))    { throw "VrmPeek.dll not found in '$Path'. Run scripts\build.ps1 first." }
-if (-not (Test-Path $viewer)) { throw "web\viewer.html not found in '$Path'. Run scripts\build.ps1 first." }
+if (-not (Test-Path $dll)) {
+    throw "VrmPeek.dll not found in '$Path'. Build it with scripts\build.ps1, or pass -Path <folder holding VrmPeek.dll>."
+}
+if (-not (Test-Path $viewer)) {
+    throw "web\viewer.html not found in '$Path'. The web folder must sit next to VrmPeek.dll."
+}
 
 $clsid      = '{EE2F8D4B-40E1-486F-B8DF-A51B16899142}'
 $previewIid = '{8895b1c6-b41f-4c1c-a562-0d564250836f}'   # IPreviewHandler
