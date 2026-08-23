@@ -9,6 +9,10 @@ read its name, author, licence terms and mesh statistics without opening anythin
 Handles **VRM 0.x** and **VRM 1.0**, including MToon materials, spring bones, and
 Draco / KTX2 / meshopt compressed models.
 
+**[⬇ Download the latest release](https://github.com/AndyChesaru/vrm-peek/releases/latest)** —
+extract it, run `Install.ps1`, done. No build tools and no administrator rights
+required. Build from source with the steps below if you'd rather.
+
 ---
 
 ## Requirements
@@ -22,7 +26,16 @@ Draco / KTX2 / meshopt compressed models.
 Installing is **per-user and needs no administrator rights** — it writes only to
 `HKEY_CURRENT_USER`.
 
-## Install
+## Install from a release
+
+Download and extract [the latest release](https://github.com/AndyChesaru/vrm-peek/releases/latest),
+then in that folder:
+
+```bash
+powershell -ExecutionPolicy Bypass -File Install.ps1
+```
+
+## Build from source
 
 ```bash
 powershell -ExecutionPolicy Bypass -File scripts\fetch-deps.ps1
